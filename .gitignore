@@ -1,0 +1,8 @@
+.DS_Store
+terraform.tfstate
+terraform.tfstate.backup
+/.vscode
+.terraform
+aws_pub_key.tfvars
+
+
