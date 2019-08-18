@@ -128,3 +128,23 @@ You can also set your computer to use recently created namespace:
 ```
 $ kubectl config set-context --current --namespace=dev
 ```
+
+#### AWS ALB Ingress Controller
+
+The AWS ALB Ingress Controller satisfies Kubernetes ingress resources by provisioning Application Load Balancers.[more](https://kubernetes-sigs.github.io/aws-alb-ingress-controller/)
+
+Go to Kubernetes folder:
+```
+$ cd ../k8s/
+```
+
+Now you can run:
+```
+$ kubectl apply -f rbac-role.yaml
+$ kubectl apply -f alb-ingress-controller.yaml
+```
+
+You can check running:
+```
+$ kubectl logs -n kube-system $(kubectl get po -n kube-system | egrep -o "alb-ingress-[a-zA-Z0-9-]+")
+```
