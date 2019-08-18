@@ -5,4 +5,5 @@ The goal is to set up a highly available and load balanced cloud environment wit
 
 ### Structure
 
-`app/` -> Web application folder
+* [app/](app/README.md): Web application folder
+* [ops/](ops/DEPLOY.md): Operations folder
