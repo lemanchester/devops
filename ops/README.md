@@ -14,7 +14,7 @@ The infrastructure is hosted using AWS and provisioned with [Hashicorp Terraform
 Install the necessary dependencies using Homebrew (or your favourite package manager):
 
 ```
-$ brew update && brew install awscli terraform
+$ brew update && brew install awscli terraform kubectl
 ```
 
 
@@ -48,11 +48,11 @@ Now you are ready to provision the Kubernetes on AWS.
 
 It's structured on the following pattern:
 
-* terraform/initialize.tf: Default vars used on the project as aws_region, availability zones, environment name
-* terraform/modules: Abstraction creation of AWS resources as eks, vpc
-* terraform/ouputs: Outputs after running terraform
-* terraform/aws_pub_key.tfvar): Local env with SSH pub key to set on server
-* terraform/terraform.tf: Declarative infrastructure to be created using local modules
+* **terraform/initialize.tf**: Default vars used on the project as aws_region, availability zones, environment name
+* **terraform/modules**: Abstraction creation of AWS resources as eks, vpc
+* **terraform/ouputs**: Outputs after running terraform
+* **terraform/aws_pub_key.tfvar** : Local env with SSH pub key to set on server
+* **terraform/terraform.tf**: Declarative infrastructure to be created using local modules
 
 
 #### Provisioning
@@ -84,4 +84,47 @@ Once finished you can run:
 
 ```
 $ terraform destroy -var-file="aws_pub_key.tfvars"
+```
+
+### Kubernetes
+
+Now that we have a Kubernetes running let connect to it.
+
+You can run the following command to connect on our k8s cluster:
+
+```
+$ aws eks update-kubeconfig --name dev
+```
+
+
+You can list the kubernetes namespaces with the following command:
+
+```
+$ kubectl get namespace
+```
+
+You should the 3 the following kubenetes namespaces:
+
+* **default** The default namespace for objects with no other namespace
+* **kube-system** The namespace for objects created by the Kubernetes system
+* **kube-public** This namespace is created automatically and is readable by all users (including those not authenticated).[more](https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/)
+
+Let's create our own namsepace.
+
+Go to Kubernetes directory:
+
+```
+$ cd ../k8s/
+```
+
+Now you can run:
+
+```
+$ kubectl create -f ./dev-namespace.yaml
+```
+
+You can also set your computer to use recently created namespace:
+
+```
+$ kubectl config set-context --current --namespace=dev
 ```
