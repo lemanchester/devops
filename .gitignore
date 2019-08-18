@@ -4,5 +4,7 @@ terraform.tfstate.backup
 /.vscode
 .terraform
 aws_pub_key.tfvars
+ops/terraform/kubeconfig_*
+ops/terraform/config-map-aws-auth_*.yaml
 
 
