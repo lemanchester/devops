@@ -1,0 +1,21 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: dev-alb
+  namespace: dev
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}]'
+    alb.ingress.kubernetes.io/subnets: AWS_PUBLIC_SUBNETS
+    alb.ingress.kubernetes.io/tags: Environment=dev
+spec:
+  rules:
+  - host: webapp.dev.com
+    http:
+      paths:
+      - backend:
+          serviceName: webapp
+          servicePort: 80
+        path: /*

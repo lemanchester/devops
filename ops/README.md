@@ -148,3 +148,34 @@ You can check running:
 ```
 $ kubectl logs -n kube-system $(kubectl get po -n kube-system | egrep -o "alb-ingress-[a-zA-Z0-9-]+")
 ```
+
+#### Kubernetes Ingress
+
+Ingress is a collection of rules that allow inbound connections to reach the cluster Services.[more](https://kubernetes.io/docs/concepts/services-networking/ingress/)
+
+
+In order to configure the Ingress we need to get the public_subnets configured to update the `dev-ingress.yaml`
+
+Run the following command to create local env `$AWS_PUBLIC_SUBNETS`:
+```
+$ AWS_PUBLIC_SUBNETS=$(aws ec2 describe-subnets \
+         --filters "Name=tag:Name,Values=dev-subnet-public-a,dev-subnet-public-b,dev-subnet-public-c" | \
+         jq -r '.Subnets[].SubnetId' | \
+         paste -s -d ' ' - | \
+         awk '{print $1 "\\, "$2 "\\, " $3 }')
+
+```
+
+We can replace the `dev-ingress.yaml` with the public_subnets and apply to Kubenertes:
+
+```
+$ cat dev-ingress.yaml | sed -e 's,AWS_PUBLIC_SUBNETS,'$AWS_PUBLIC_SUBNETS',g' | kubectl apply -f -
+```
+
+Then you can check the status of Ingress load balancer:
+
+```
+$ kubectl logs -n kube-system  \
+        $(kubectl get po -n kube-system | egrep -o 'alb-ingress[a-zA-Z0-9-]+') | \
+        grep 'dev\/dev-alb'
+```
