@@ -14,7 +14,7 @@ The infrastructure is hosted using AWS and provisioned with [Hashicorp Terraform
 Install the necessary dependencies using Homebrew (or your favourite package manager):
 
 ```
-$ brew update && brew install awscli terraform kubectl
+$ brew update && brew install awscli terraform kubectl kustomize jq
 ```
 
 

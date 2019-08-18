@@ -1,0 +1,10 @@
+images:
+  - name: webapp
+    newName: WEBAPP_REPO
+
+commonLabels:
+  app: webapp
+
+resources:
+- deployment-web.yaml
+- service.yaml
