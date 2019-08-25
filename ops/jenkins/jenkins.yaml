@@ -1,0 +1,368 @@
+apiVersion: v1
+data:
+  apply_config.sh: |-
+    mkdir -p /usr/share/jenkins/ref/secrets/;
+    echo "false" > /usr/share/jenkins/ref/secrets/slave-to-master-security-kill-switch;
+    cp --no-clobber /var/jenkins_config/config.xml /var/jenkins_home;
+    cp --no-clobber /var/jenkins_config/jenkins.CLI.xml /var/jenkins_home;
+    cp --no-clobber /var/jenkins_config/jenkins.model.JenkinsLocationConfiguration.xml /var/jenkins_home;
+    # Install missing plugins
+    cp /var/jenkins_config/plugins.txt /var/jenkins_home;
+    rm -rf `find /usr/share/jenkins/ref/plugins/ -name *.lock`
+    /usr/local/bin/install-plugins.sh `echo $(cat /var/jenkins_home/plugins.txt)`;
+    # Copy plugins to shared volume
+    cp -r -n /usr/share/jenkins/ref/plugins/* /var/jenkins_plugins;
+  config.xml: |-
+    <?xml version='1.0' encoding='UTF-8'?>
+    <hudson>
+      <disabledAdministrativeMonitors/>
+      <version>lts</version>
+      <numExecutors>0</numExecutors>
+      <mode>NORMAL</mode>
+      <useSecurity>true</useSecurity>
+      <authorizationStrategy class="hudson.security.FullControlOnceLoggedInAuthorizationStrategy">
+        <denyAnonymousReadAccess>true</denyAnonymousReadAccess>
+      </authorizationStrategy>
+      <securityRealm class="hudson.security.LegacySecurityRealm"/>
+      <disableRememberMe>false</disableRememberMe>
+      <projectNamingStrategy class="jenkins.model.ProjectNamingStrategy$DefaultProjectNamingStrategy"/>
+      <workspaceDir>${JENKINS_HOME}/workspace/${ITEM_FULLNAME}</workspaceDir>
+      <buildsDir>${ITEM_ROOTDIR}/builds</buildsDir>
+      <markupFormatter class="hudson.markup.EscapedMarkupFormatter"/>
+      <jdks/>
+      <viewsTabBar class="hudson.views.DefaultViewsTabBar"/>
+      <myViewsTabBar class="hudson.views.DefaultMyViewsTabBar"/>
+      <clouds>
+        <org.csanchez.jenkins.plugins.kubernetes.KubernetesCloud plugin="kubernetes@1.13.4">
+             <name>kubernetes</name>
+             <defaultsProviderTemplate></defaultsProviderTemplate>
+             <templates>
+               <org.csanchez.jenkins.plugins.kubernetes.PodTemplate>
+                 <inheritFrom></inheritFrom>
+                 <name>jenkins-worker</name>
+                 <namespace>dev</namespace>
+                 <privileged>false</privileged>
+                 <capOnlyOnAlivePods>false</capOnlyOnAlivePods>
+                 <alwaysPullImage>false</alwaysPullImage>
+                 <instanceCap>1</instanceCap>
+                 <slaveConnectTimeout>100</slaveConnectTimeout>
+                 <idleMinutes>0</idleMinutes>
+                 <activeDeadlineSeconds>0</activeDeadlineSeconds>
+                 <label>autoscale</label>
+                 <nodeSelector></nodeSelector>
+                 <nodeUsageMode>NORMAL</nodeUsageMode>
+                 <customWorkspaceVolumeEnabled>false</customWorkspaceVolumeEnabled>
+                 <workspaceVolume class="org.csanchez.jenkins.plugins.kubernetes.volumes.workspace.EmptyDirWorkspaceVolume">
+                   <memory>false</memory>
+                 </workspaceVolume>
+                 <volumes>
+                   <org.csanchez.jenkins.plugins.kubernetes.volumes.HostPathVolume>
+                     <mountPath>/var/run/docker.sock</mountPath>
+                     <hostPath>/var/run/docker.sock</hostPath>
+                   </org.csanchez.jenkins.plugins.kubernetes.volumes.HostPathVolume>
+                   <org.csanchez.jenkins.plugins.kubernetes.volumes.SecretVolume>
+                     <mountPath>/var/run/secrets/tokens</mountPath>
+                     <secretName>jenkins-secret</secretName>
+                   </org.csanchez.jenkins.plugins.kubernetes.volumes.SecretVolume>
+                 </volumes>
+                 <containers>
+                   <org.csanchez.jenkins.plugins.kubernetes.ContainerTemplate>
+                     <name>jnlp</name>
+                     <image>124837307879.dkr.ecr.us-east-1.amazonaws.com/com.thoughtworks/jnlp-worker-aws:8</image>
+                     <privileged>true</privileged>
+                     <alwaysPullImage>false</alwaysPullImage>
+                     <workingDir>/root</workingDir>
+                     <command></command>
+                     <args>${computer.jnlpmac} ${computer.name}</args>
+                     <ttyEnabled>true</ttyEnabled>
+                     <resourceRequestCpu>500m</resourceRequestCpu>
+                     <resourceRequestMemory>4096Mi</resourceRequestMemory>
+                     <resourceLimitCpu>500m</resourceLimitCpu>
+                     <resourceLimitMemory>4096Mi</resourceLimitMemory>
+                     <envVars>
+                       <org.csanchez.jenkins.plugins.kubernetes.model.KeyValueEnvVar>
+                         <key>JENKINS_URL</key>
+                         <value>http://jenkins.default:8080</value>
+                       </org.csanchez.jenkins.plugins.kubernetes.model.KeyValueEnvVar>
+                     </envVars>
+                     <ports/>
+                     <livenessProbe>
+                       <execArgs></execArgs>
+                       <timeoutSeconds>0</timeoutSeconds>
+                       <initialDelaySeconds>0</initialDelaySeconds>
+                       <failureThreshold>0</failureThreshold>
+                       <periodSeconds>0</periodSeconds>
+                       <successThreshold>0</successThreshold>
+                     </livenessProbe>
+                   </org.csanchez.jenkins.plugins.kubernetes.ContainerTemplate>
+                 </containers>
+                 <envVars/>
+                 <annotations/>
+                 <imagePullSecrets/>
+                 <nodeProperties/>
+                 <yaml></yaml>
+                 <podRetention class="org.csanchez.jenkins.plugins.kubernetes.pod.retention.Default"/>
+               </org.csanchez.jenkins.plugins.kubernetes.PodTemplate>
+             </templates>
+             <serverUrl></serverUrl>
+             <skipTlsVerify>false</skipTlsVerify>
+             <addMasterProxyEnvVars>false</addMasterProxyEnvVars>
+             <capOnlyOnAlivePods>false</capOnlyOnAlivePods>
+             <jenkinsUrl>http://jenkins.default:8080</jenkinsUrl>
+             <jenkinsTunnel>jenkins-agent:50000</jenkinsTunnel>
+             <containerCap>10</containerCap>
+             <retentionTimeout>5</retentionTimeout>
+             <connectTimeout>0</connectTimeout>
+             <readTimeout>0</readTimeout>
+             <usageRestricted>false</usageRestricted>
+             <maxRequestsPerHost>32</maxRequestsPerHost>
+             <podRetention class="org.csanchez.jenkins.plugins.kubernetes.pod.retention.OnFailure"/>
+           </org.csanchez.jenkins.plugins.kubernetes.KubernetesCloud>
+      </clouds>
+      <quietPeriod>5</quietPeriod>
+      <scmCheckoutRetryCount>0</scmCheckoutRetryCount>
+      <views>
+        <hudson.model.AllView>
+          <owner class="hudson" reference="../../.."/>
+          <name>All</name>
+          <filterExecutors>false</filterExecutors>
+          <filterQueue>false</filterQueue>
+          <properties class="hudson.model.View$PropertyList"/>
+        </hudson.model.AllView>
+      </views>
+      <primaryView>All</primaryView>
+      <slaveAgentPort>50000</slaveAgentPort>
+      <disabledAgentProtocols>
+        <string>JNLP-connect</string>
+        <string>JNLP2-connect</string>
+      </disabledAgentProtocols>
+      <label></label>
+      <crumbIssuer class="hudson.security.csrf.DefaultCrumbIssuer">
+        <excludeClientIPFromCrumb>true</excludeClientIPFromCrumb>
+      </crumbIssuer>
+      <nodeProperties/>
+      <globalNodeProperties/>
+      <noUsageStatistics>true</noUsageStatistics>
+    </hudson>
+  jenkins.CLI.xml: |-
+    <?xml version='1.1' encoding='UTF-8'?>
+    <jenkins.CLI>
+      <enabled>false</enabled>
+    </jenkins.CLI>
+  jenkins.model.JenkinsLocationConfiguration.xml: |-
+    <?xml version='1.1' encoding='UTF-8'?>
+    <jenkins.model.JenkinsLocationConfiguration>
+      <adminAddress></adminAddress>
+      <jenkinsUrl>http://jenkins:8080</jenkinsUrl>
+    </jenkins.model.JenkinsLocationConfiguration>
+  plugins.txt: |-
+    workflow-job:2.25
+    pipeline-model-declarative-agent:1.1.1
+    junit:1.26.1
+    git:3.9.1
+    scm-api:2.3.0
+    git-client:2.7.3
+    jsch:0.1.54.2
+    jdk-tool:1.1
+    pipeline-model-definition:1.3.2
+    pipeline-stage-tags-metadata:1.3.2
+    workflow-api:2.31
+    apache-httpcomponents-client-4-api:4.5.5-3.0
+    pipeline-model-extensions:1.3.2
+    workflow-durable-task-step:2.25
+    workflow-scm-step:2.7
+    variant:1.1
+    workflow-aggregator:2.6
+    workflow-step-api:2.16
+    pipeline-input-step:2.8
+    ace-editor:1.1
+    jackson2-api:2.8.11.3
+    pipeline-stage-step:2.3
+    momentjs:1.1.1
+    handlebars:1.1.1
+    cloudbees-folder:6.6
+    pipeline-rest-api:2.10
+    matrix-project:1.13
+    kubernetes-credentials:0.4.0
+    kubernetes:1.13.4
+    jquery-detached:1.2.1
+    authentication-tokens:1.3
+    durable-task:1.26
+    lockable-resources:2.3
+    pipeline-build-step:2.7
+    display-url-api:2.2.0
+    pipeline-milestone-step:1.3.1
+    workflow-cps-global-lib:2.12
+    pipeline-stage-view:2.10
+    ssh-credentials:1.14
+    docker-workflow:1.17
+    pipeline-model-api:1.3.2
+    pipeline-graph-analysis:1.7
+    workflow-cps:2.60
+    plain-credentials:1.4
+    bouncycastle-api:2.17
+    htmlpublisher:1.17
+    credentials-binding:1.17
+    workflow-basic-steps:2.12
+    script-security:1.48
+    credentials:2.1.18
+    workflow-support:2.21
+    branch-api:2.0.20
+    docker-commons:1.13
+    mailer:1.22
+    command-launcher:1.2
+    pipeline-utility-steps:2.1.0
+    structs:1.17
+    workflow-multibranch:2.20
+    git-server:1.7
+
+kind: ConfigMap
+metadata:
+  creationTimestamp: 2018-10-17T13:48:39Z
+  name: jenkins
+  namespace: dev
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: jenkins
+  name: jenkins
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jenkins
+      deployment: jenkins
+  template:
+    metadata:
+      labels:
+        app: jenkins
+        deployment: jenkins
+    spec:
+      containers:
+      - image: jenkins/jenkins:lts-alpine
+        args: [ "--argumentsRealm.passwd.$(ADMIN_USER)=$(ADMIN_PASSWORD)","--argumentsRealm.roles.$(ADMIN_USER)=admin" ]
+        env:
+        - name: JAVA_TOOL_OPTIONS
+        - name: JENKINS_OPTS
+        - name: ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: jenkins-admin-password
+              name: jenkins-admin-account
+        - name: ADMIN_USER
+          valueFrom:
+            secretKeyRef:
+              key: jenkins-admin-user
+              name: jenkins-admin-account
+
+        imagePullPolicy: Always
+        livenessProbe:
+          failureThreshold: 12
+          httpGet:
+            path: /login
+            port: http
+            scheme: HTTP
+          initialDelaySeconds: 90
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 5
+        name: jenkins
+        ports:
+        - containerPort: 8080
+          name: http
+          protocol: TCP
+        - containerPort: 50000
+          name: slavelistener
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /login
+            port: http
+            scheme: HTTP
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        resources:
+          limits:
+            cpu: "2"
+            memory: 2Gi
+          requests:
+            cpu: 50m
+            memory: 256Mi
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /var/jenkins_home
+          name: jenkins-home
+        - mountPath: /var/jenkins_config
+          name: jenkins-config
+          readOnly: true
+        - mountPath: /usr/share/jenkins/ref/plugins/
+          name: plugin-dir
+        - mountPath: /usr/share/jenkins/ref/secrets/
+          name: secrets-dir
+        - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+          name: jenkins-secret
+          readOnly: true
+      dnsPolicy: ClusterFirst
+      initContainers:
+      - command:
+        - sh
+        - /var/jenkins_config/apply_config.sh
+        image: jenkins/jenkins:lts-alpine
+        imagePullPolicy: Always
+        name: copy-default-config
+        resources:
+          limits:
+            cpu: "2"
+            memory: 2Gi
+          requests:
+            cpu: 50m
+            memory: 256Mi
+        terminationMessagePolicy: FallbackToLogsOnError
+        volumeMounts:
+        - mountPath: /var/jenkins_home
+          name: jenkins-home
+        - mountPath: /var/jenkins_config
+          name: jenkins-config
+        - mountPath: /var/jenkins_plugins
+          name: plugin-dir
+        - mountPath: /usr/share/jenkins/ref/secrets/
+          name: secrets-dir
+        - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+          name: jenkins-secret
+          readOnly: true
+      securityContext:
+        runAsUser: 0
+      serviceAccount: jenkins
+      serviceAccountName: jenkins
+      terminationGracePeriodSeconds: 30
+      tolerations:
+      - effect: NoExecute
+        key: node.kubernetes.io/not-ready
+        operator: Exists
+        tolerationSeconds: 300
+      - effect: NoExecute
+        key: node.kubernetes.io/unreachable
+        operator: Exists
+        tolerationSeconds: 300
+      volumes:
+      - configMap:
+          defaultMode: 420
+          name: jenkins
+        name: jenkins-config
+      - emptyDir: {}
+        name: plugin-dir
+      - emptyDir: {}
+        name: secrets-dir
+      - name: jenkins-home
+        persistentVolumeClaim:
+          claimName: jenkins-home
+      - name: jenkins-secret
+        secret:
+          defaultMode: 420
+          secretName: jenkins-secret
