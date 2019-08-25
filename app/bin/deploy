@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+GITHUB_REPOS_REGISTRY=$(aws ecr describe-repositories --repository-names webapp | \
+  jq -r '.repositories[0].repositoryUri')
+
+  docker tag webapp:latest $GITHUB_REPOS_REGISTRY
+$(aws ecr get-login --no-include-email)
+docker push $GITHUB_REPOS_REGISTRY
+
+cd k8s/ && kustomize build | sed -e 's,GITHUB_REPOS_REGISTRY,'$GITHUB_REPOS_REGISTRY',g' | \
+  kubectl apply -f -

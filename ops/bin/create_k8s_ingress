@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+# Get AWS public subnets
+aws_public_subnets=$(aws ec2 describe-subnets \
+         --filters "Name=tag:Name,Values=dev-subnet-public-a,dev-subnet-public-b,dev-subnet-public-c" | \
+         jq -r '.Subnets[].SubnetId' | \
+         paste -s -d ' ' - | \
+         awk '{print $1 "\\, "$2 "\\, " $3 }')
+
+# Replace subnets and create ingress to recevei traaffic
+cd k8s/ && cat dev-ingress.yaml | sed -e "s/AWS_PUBLIC_SUBNETS/${aws_public_subnets}/g" | kubectl apply -f -
