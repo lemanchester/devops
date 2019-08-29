@@ -20,6 +20,18 @@ spec:
         command: ["java", "-jar", "helloworld.jar"]
         ports:
         - containerPort: 8080
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8080
+          initialDelaySeconds: 15
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 5
         resources:
           requests:
             memory: "64Mi"
