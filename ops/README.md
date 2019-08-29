@@ -6,6 +6,9 @@ The infrastructure is hosted using AWS and provisioned with [Hashicorp Terraform
 
 ## Structure
 
+* **bin/** -> Bash scripts
+* **jenkins/** -> Jenkins to run CI/CD
+* **k8s/** -> Kuberentes files to create namespace, ingress
 * **terraform/** -> Provisioning the Kubernetes infrastructure with Terraform
 
 

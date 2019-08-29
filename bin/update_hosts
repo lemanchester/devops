@@ -3,4 +3,4 @@
 elb_hostname=$(kubectl get ingress dev-alb -o json | jq -r '.status.loadBalancer.ingress[0].hostname')
 elb_ip=$(host $elb_hostname | awk '{print $4}' | head -n 1)
 
-echo "$elb_ip webapp.dev.com" | sudo tee -a /etc/hosts
+echo "$elb_ip webapp.dev.com \n$elb_ip jenkins.dev.com" | sudo tee -a /etc/hosts
